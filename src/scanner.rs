@@ -4,13 +4,15 @@ use crate::token::Token;
 
 fn match_number(i: &mut usize, chars: &Vec<char>, src: &String) -> Result<Token, ParseFloatError> {
     let start = *i;
-    while chars[*i + 1].is_numeric() {
+    while *i + 1 < src.len() && chars[*i + 1].is_numeric() {
         *i += 1;
     }
-    if chars[*i + 1] == '.' && chars[*i + 2].is_numeric() {
-        *i += 1;
-        while chars[*i + 1].is_numeric() {
+    if *i + 1 < src.len() && chars[*i + 1] == '.' {
+        if *i + 2 < src.len() && chars[*i + 2].is_numeric() {
             *i += 1;
+            while chars[*i + 1].is_numeric() {
+                *i += 1;
+            }
         }
     }
     Ok(Token::Number(
@@ -22,7 +24,10 @@ fn match_number(i: &mut usize, chars: &Vec<char>, src: &String) -> Result<Token,
 
 fn match_word(i: &mut usize, chars: &Vec<char>, src: &String) -> Result<Token, String> {
     let start = *i;
-    while chars[*i + 1].is_ascii_alphanumeric() {
+    while *i + 3 < src.len() && chars[*i + 1].is_ascii_alphanumeric()
+        || chars[*i + 1] == '_'
+        || chars[*i + 1] == '-'
+    {
         *i += 1;
     }
     let word = src.get(start..*i + 1).expect("Index out of bounds");
@@ -77,4 +82,94 @@ pub fn tokenize(src: String) -> Result<Vec<Token>, String> {
         i += 1;
     }
     Ok(tokens)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::token::Token;
+
+    #[test]
+    fn allowed_strings() {
+        let testcases = [
+            (
+                "1 + 1",
+                vec![Token::Number(1.0), Token::Plus, Token::Number(1.0)],
+            ),
+            (
+                "1 - 2 * 3 / 4",
+                vec![
+                    Token::Number(1.0),
+                    Token::Minus,
+                    Token::Number(2.0),
+                    Token::Star,
+                    Token::Number(3.0),
+                    Token::Slash,
+                    Token::Number(4.0),
+                ],
+            ),
+            (
+                "sin(cos(tan(log(2.0))))",
+                vec![
+                    Token::Sin,
+                    Token::OpenParen,
+                    Token::Cos,
+                    Token::OpenParen,
+                    Token::Tan,
+                    Token::OpenParen,
+                    Token::Log,
+                    Token::OpenParen,
+                    Token::Number(2.0),
+                    Token::CloseParen,
+                    Token::CloseParen,
+                    Token::CloseParen,
+                    Token::CloseParen,
+                ],
+            ),
+            (
+                "max(1.0,2.0,3.0,min(4.0,5.0,6.0))",
+                vec![
+                    Token::Max,
+                    Token::OpenParen,
+                    Token::Number(1.0),
+                    Token::Comma,
+                    Token::Number(2.0),
+                    Token::Comma,
+                    Token::Number(3.0),
+                    Token::Comma,
+                    Token::Min,
+                    Token::OpenParen,
+                    Token::Number(4.0),
+                    Token::Comma,
+                    Token::Number(5.0),
+                    Token::Comma,
+                    Token::Number(6.0),
+                    Token::CloseParen,
+                    Token::CloseParen,
+                ],
+            ),
+        ];
+        for case in testcases.iter() {
+            let res = super::tokenize(case.0.to_string());
+            assert!(res.is_ok());
+            assert_eq!(
+                res.clone().unwrap().len(),
+                case.1.len(),
+                "\n  left: {:?} \n right: {:?}",
+                res.clone().unwrap(),
+                case.1
+            );
+            assert_eq!(res.unwrap(), case.1);
+        }
+    }
+
+    #[test]
+    fn disallowed_strings() {
+        let testcases = [
+            "@", "!", "#", "$", "|", "{", "}", ":", "\"", "\'", ";", ">", "<", "`", "~", "max-",
+        ];
+        for case in testcases.iter() {
+            let res = super::tokenize(case.to_string());
+            assert!(res.is_err(), "{:?}", res.unwrap());
+        }
+    }
 }
