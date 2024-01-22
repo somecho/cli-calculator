@@ -11,6 +11,10 @@ pub enum Token {
     Min,
     Sqrt,
     Pow,
+    Cos,
+    Sin,
+    Tan,
+    Log,
     Comma,
     Number(f32),
 }
@@ -31,6 +35,10 @@ impl std::fmt::Display for Token {
             Token::Pow => String::from("pow"),
             Token::Comma => String::from(","),
             Token::Number(n) => n.to_string(),
+            Token::Cos => String::from("cos"),
+            Token::Sin => String::from("sin"),
+            Token::Tan => String::from("tan"),
+            Token::Log => String::from("log"),
         };
         write!(f, "{}", s)
     }
