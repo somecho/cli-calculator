@@ -11,11 +11,13 @@ fn main() {
         let tokens = tokenize(input.clone());
         if let Err(e) = tokens {
             println!("{e}");
+            input = String::new();
             continue;
         }
         let ast = ASTParser::create_ast(tokens.unwrap());
         if let Err(e) = ast {
             println!("{e}");
+            input = String::new();
             continue;
         }
         let result = evaluate::evaluate(ast.unwrap());
