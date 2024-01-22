@@ -3,7 +3,7 @@
 This is a simple cli calculator created in Rust. It's a personal project to learn about interpreters. The calculator is a scientific calculator with a limited feature set:
 - arithmetic operations: `-`, `+`, `*`, `/` and `%`  
 - trigonometric functions: `cos`, `sin` and `tan`
-- other functions: `max`, `min`, `floor`, `ceil`, `log`(base 10)
+- other functions: `max`, `min`, `floor`, `ceil`, `log`
 
 ## Usage
 After running the following commands, you will enter a REPL where you can type in mathematical expressions to be calculated.
