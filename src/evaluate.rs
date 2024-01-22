@@ -1,19 +1,21 @@
+use std::collections::HashMap;
+
 use crate::{ast::Expression, token::Token};
 
-pub fn evaluate(expr: Box<Expression>) -> f32 {
+pub fn evaluate(expr: Box<Expression>, variables: &mut HashMap<String, f32>) -> f32 {
     match *expr {
-        Expression::Grouping(e) => evaluate(e),
+        Expression::Grouping(e) => evaluate(e, variables),
         Expression::Literal(n) => n,
         Expression::Unary(op, v) => {
-            let value = evaluate(v);
+            let value = evaluate(v, variables);
             if op == Token::Minus {
                 return -value;
             }
             unreachable!()
         }
         Expression::Binary(op, a, b) => {
-            let a = evaluate(a);
-            let b = evaluate(b);
+            let a = evaluate(a, variables);
+            let b = evaluate(b, variables);
             match op {
                 Token::Minus => a - b,
                 Token::Plus => a + b,
@@ -24,7 +26,7 @@ pub fn evaluate(expr: Box<Expression>) -> f32 {
             }
         }
         Expression::SingleArity(op, a) => {
-            let a = evaluate(a);
+            let a = evaluate(a, variables);
             match op {
                 Token::Sqrt => a.sqrt(),
                 Token::Floor => a.floor(),
@@ -36,8 +38,8 @@ pub fn evaluate(expr: Box<Expression>) -> f32 {
             }
         }
         Expression::DoubleArity(op, a, b) => {
-            let a = evaluate(a);
-            let b = evaluate(b);
+            let a = evaluate(a, variables);
+            let b = evaluate(b, variables);
             match op {
                 Token::Pow => a.powf(b),
                 Token::Log => a.log(b),
@@ -45,7 +47,10 @@ pub fn evaluate(expr: Box<Expression>) -> f32 {
             }
         }
         Expression::MultiArity(op, args) => {
-            let args: Vec<f32> = args.into_iter().map(|arg| evaluate(arg)).collect();
+            let args: Vec<f32> = args
+                .into_iter()
+                .map(|arg| evaluate(arg, variables))
+                .collect();
             match op {
                 Token::Max => args
                     .into_iter()
@@ -58,5 +63,11 @@ pub fn evaluate(expr: Box<Expression>) -> f32 {
                 _ => unreachable!(),
             }
         }
+        Expression::Assignment(t, e) => {
+            let v = evaluate(e, variables);
+            variables.insert(t.get_identifier().unwrap(), v);
+            Default::default()
+        }
+        Expression::Variable(s) => *variables.get(&s).unwrap(),
     }
 }

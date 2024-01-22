@@ -1,9 +1,10 @@
-use std::io;
+use std::{collections::HashMap, io};
 
 use calculator_rs::{ast::ASTParser, evaluate, scanner::tokenize};
 
 fn main() {
     let mut input = String::new();
+    let mut vars: HashMap<String, f32> = HashMap::new();
     println!("Simple Calculator");
     println!("To calculate, type a formula:");
     loop {
@@ -20,7 +21,7 @@ fn main() {
             input = String::new();
             continue;
         }
-        let result = evaluate::evaluate(ast.unwrap());
+        let result = evaluate::evaluate(ast.unwrap(), &mut vars);
         println!("{result}");
         input = String::new();
     }

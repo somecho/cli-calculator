@@ -42,7 +42,8 @@ fn match_word(i: &mut usize, chars: &Vec<char>, src: &String) -> Result<Token, S
         "log" => Ok(Token::Log),
         "floor" => Ok(Token::Floor),
         "ceil" => Ok(Token::Ceil),
-        _ => Err(format!("Unrecognized word {}", word)),
+        "let" => Ok(Token::Let),
+        _ => Ok(Token::Identifier(word.to_string())),
     }
 }
 
@@ -61,6 +62,7 @@ pub fn tokenize(src: String) -> Result<Vec<Token>, String> {
             ')' => tokens.push(Token::CloseParen),
             ',' => tokens.push(Token::Comma),
             '%' => tokens.push(Token::Percent),
+            '=' => tokens.push(Token::Equal),
             ' ' => {}
             '\n' => {}
             _ => {
@@ -147,6 +149,15 @@ mod tests {
                     Token::Number(6.0),
                     Token::CloseParen,
                     Token::CloseParen,
+                ],
+            ),
+            (
+                "let a = 2",
+                vec![
+                    Token::Let,
+                    Token::Identifier("a".to_string()),
+                    Token::Equal,
+                    Token::Number(2.0),
                 ],
             ),
         ];

@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     Plus,
     Minus,
@@ -19,6 +19,9 @@ pub enum Token {
     Log,
     Comma,
     Number(f32),
+    Identifier(String),
+    Let,
+    Equal
 }
 
 impl Token {
@@ -26,6 +29,13 @@ impl Token {
         match self {
             Self::Number(n) => Ok(*n),
             _ => Err(format!("{} is not a number token", self)),
+        }
+    }
+
+    pub fn get_identifier(&self) -> Result<String, String> {
+        match self {
+            Self::Identifier(s) => Ok(s.to_owned()),
+            _ => Err(format!("{self} is not an identifier")),
         }
     }
 }
@@ -52,6 +62,9 @@ impl std::fmt::Display for Token {
             Token::Log => String::from("log"),
             Token::Floor => String::from("floor"),
             Token::Ceil => String::from("ceil"),
+            Token::Identifier(s) => s.clone(),
+            Token::Let => String::from("let"),
+            Token::Equal => String::from("=")
         };
         write!(f, "{}", s)
     }

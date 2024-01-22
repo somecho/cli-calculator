@@ -1,9 +1,13 @@
+use std::mem::{self, Discriminant};
+
 use crate::token::Token;
 
 #[derive(Debug)]
 pub enum Expression {
     Grouping(Box<Expression>),
     Literal(f32),
+    Variable(String),
+    Assignment(Token, Box<Expression>),
     Unary(Token, Box<Expression>),
     Binary(Token, Box<Expression>, Box<Expression>),
     SingleArity(Token, Box<Expression>),
@@ -16,7 +20,9 @@ impl std::fmt::Display for Expression {
         let s = match self {
             Expression::Grouping(e) => format!("({})", e.to_string()),
             Expression::Literal(n) => n.to_string(),
+            Expression::Assignment(n, _) => n.get_identifier().unwrap(),
             Expression::Unary(op, e) => format!("{}{}", op, e.to_string()),
+            Expression::Variable(s) => s.to_owned(),
             Expression::Binary(op, l, r) => format!("{} {} {}", l.to_string(), op, r.to_string()),
             Expression::SingleArity(op, a) => format!("{}({})", op, a.to_string()),
             Expression::DoubleArity(op, a, b) => {
@@ -65,6 +71,30 @@ impl ASTParser {
     }
 
     fn expression(&mut self) -> Result<Box<Expression>, String> {
+        if self.r#match(&vec![Token::Let]) {
+            let id = self.peek().clone();
+            match id {
+                Token::Identifier(_) => {
+                    self.advance();
+                }
+                _ => {
+                    return Err("An identifier must come after the let keyword".to_string());
+                }
+            }
+
+            if self.check(mem::discriminant(&Token::Equal)) {
+                self.advance();
+            } else {
+                return Err(
+                    "Expected = sign to come after an identifier in let expression".to_string(),
+                );
+            }
+            let expr = self.expression();
+            return Ok(Box::new(Expression::Assignment(
+                id,
+                expr.expect("Unable to create syntax tree"),
+            )));
+        }
         self.term()
     }
 
@@ -80,7 +110,7 @@ impl ASTParser {
         ]
         .contains(&operator)
         {
-            if self.check(Token::OpenParen) {
+            if self.check(mem::discriminant(&Token::OpenParen)) {
                 self.advance();
             } else {
                 return Err(format!(
@@ -92,7 +122,7 @@ impl ASTParser {
                 return Err("Cannot end with opening parenthesis".to_string());
             }
             let arg = self.expression();
-            if self.check(Token::CloseParen) {
+            if self.check(mem::discriminant(&Token::CloseParen)) {
                 self.advance();
             } else {
                 return Err(format!(
@@ -107,7 +137,7 @@ impl ASTParser {
             )));
         }
         if vec![Token::Pow, Token::Log].contains(&operator) {
-            if self.check(Token::OpenParen) {
+            if self.check(mem::discriminant(&Token::OpenParen)) {
                 self.advance();
             } else {
                 return Err(format!(
@@ -122,7 +152,7 @@ impl ASTParser {
 
             let arg1 = self.expression();
 
-            if self.check(Token::Comma) {
+            if self.check(mem::discriminant(&Token::Comma)) {
                 self.advance();
             } else {
                 return Err(format!("{} requires atleast two operands", operator));
@@ -130,7 +160,7 @@ impl ASTParser {
 
             let arg2 = self.expression();
 
-            if self.check(Token::CloseParen) {
+            if self.check(mem::discriminant(&Token::CloseParen)) {
                 self.advance();
             } else {
                 return Err(format!(
@@ -146,7 +176,7 @@ impl ASTParser {
         }
 
         if vec![Token::Max, Token::Min].contains(&operator) {
-            if self.check(Token::OpenParen) {
+            if self.check(mem::discriminant(&Token::OpenParen)) {
                 self.advance();
             } else {
                 return Err(format!(
@@ -175,7 +205,7 @@ impl ASTParser {
                     return Err("Trailing commas are not allowed".to_string());
                 }
             }
-            if self.check(Token::CloseParen) {
+            if self.check(mem::discriminant(&Token::CloseParen)) {
                 self.advance();
             } else {
                 return Err(format!(
@@ -234,7 +264,7 @@ impl ASTParser {
     fn primary(&mut self) -> Result<Box<Expression>, String> {
         if self.r#match(&vec![Token::OpenParen]) {
             let expr = self.expression();
-            if self.check(Token::CloseParen) {
+            if self.check(mem::discriminant(&Token::CloseParen)) {
                 self.advance();
             } else {
                 return Err("Missing matching parenthesis ')'".to_string());
@@ -259,16 +289,23 @@ impl ASTParser {
             return self.function();
         }
 
-        if self.r#match(&vec![Token::Number(self.peek().get_number()?)]) {
+        if self.r#match(&vec![Token::Number(Default::default())]) {
             return Ok(Box::new(Expression::Literal(self.previous().get_number()?)));
         }
+
+        if self.r#match(&vec![Token::Identifier(Default::default())]) {
+            return Ok(Box::new(Expression::Variable(
+                self.previous().get_identifier()?,
+            )));
+        }
+
         Err("Unable to create syntax tree".to_string())
     }
 
     /// checks if current token matches given token and consumes it if it does
     fn r#match(&mut self, types: &Vec<Token>) -> bool {
         for t in types.iter() {
-            if self.check(*t) {
+            if self.check(mem::discriminant(t)) {
                 self.advance();
                 return true;
             }
@@ -276,11 +313,11 @@ impl ASTParser {
         false
     }
 
-    fn check(&self, token_type: Token) -> bool {
+    fn check(&self, token_type: Discriminant<Token>) -> bool {
         if self.end() {
             false
         } else {
-            *self.peek() == token_type
+            mem::discriminant(self.peek()) == token_type
         }
     }
 
