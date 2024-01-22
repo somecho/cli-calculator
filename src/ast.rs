@@ -74,7 +74,6 @@ impl ASTParser {
             Token::Cos,
             Token::Sin,
             Token::Tan,
-            Token::Log,
             Token::Sqrt,
             Token::Floor,
             Token::Ceil,
@@ -104,7 +103,7 @@ impl ASTParser {
                 arg.expect("Unable to create syntax tree"),
             )));
         }
-        if operator == Token::Pow {
+        if vec![Token::Pow, Token::Log].contains(&operator) {
             if self.check(Token::OpenParen) {
                 self.advance();
             } else {

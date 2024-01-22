@@ -32,7 +32,6 @@ pub fn evaluate(expr: Box<Expression>) -> f32 {
                 Token::Cos => a.cos(),
                 Token::Sin => a.sin(),
                 Token::Tan => a.tan(),
-                Token::Log => a.log(10.0),
                 _ => unreachable!(),
             }
         }
@@ -41,6 +40,7 @@ pub fn evaluate(expr: Box<Expression>) -> f32 {
             let b = evaluate(b);
             match op {
                 Token::Pow => a.powf(b),
+                Token::Log => a.log(b),
                 _ => unreachable!(),
             }
         }
