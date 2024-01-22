@@ -7,6 +7,8 @@ pub enum Token {
     Percent,
     OpenParen,
     CloseParen,
+    Floor,
+    Ceil,
     Max,
     Min,
     Sqrt,
@@ -48,6 +50,8 @@ impl std::fmt::Display for Token {
             Token::Sin => String::from("sin"),
             Token::Tan => String::from("tan"),
             Token::Log => String::from("log"),
+            Token::Floor => String::from("floor"),
+            Token::Ceil => String::from("ceil"),
         };
         write!(f, "{}", s)
     }

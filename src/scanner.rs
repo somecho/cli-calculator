@@ -40,6 +40,8 @@ fn match_word(i: &mut usize, chars: &Vec<char>, src: &String) -> Result<Token, S
         "sin" => Ok(Token::Sin),
         "tan" => Ok(Token::Tan),
         "log" => Ok(Token::Log),
+        "floor" => Ok(Token::Floor),
+        "ceil" => Ok(Token::Ceil),
         _ => Err(format!("Unrecognized word {}", word)),
     }
 }

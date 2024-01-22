@@ -70,7 +70,17 @@ impl ASTParser {
 
     fn function(&mut self) -> Result<Box<Expression>, String> {
         let operator = self.previous().clone();
-        if vec![Token::Cos, Token::Sin, Token::Tan, Token::Log, Token::Sqrt].contains(&operator) {
+        if vec![
+            Token::Cos,
+            Token::Sin,
+            Token::Tan,
+            Token::Log,
+            Token::Sqrt,
+            Token::Floor,
+            Token::Ceil,
+        ]
+        .contains(&operator)
+        {
             if self.check(Token::OpenParen) {
                 self.advance();
             } else {
@@ -232,6 +242,8 @@ impl ASTParser {
             Token::Max,
             Token::Min,
             Token::Pow,
+            Token::Floor,
+            Token::Ceil,
         ]) {
             return self.function();
         }

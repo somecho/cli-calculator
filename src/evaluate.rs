@@ -27,6 +27,8 @@ pub fn evaluate(expr: Box<Expression>) -> f32 {
             let a = evaluate(a);
             match op {
                 Token::Sqrt => a.sqrt(),
+                Token::Floor => a.floor(),
+                Token::Ceil => a.ceil(),
                 Token::Cos => a.cos(),
                 Token::Sin => a.sin(),
                 Token::Tan => a.tan(),
