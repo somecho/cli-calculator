@@ -1,7 +1,7 @@
 use calculator_rs::{ast::ASTParser, scanner::tokenize};
 
 fn main() {
-    let input = String::from("4 * (1 + 2)");
+    let input = String::from("4 * (1 + 2) 2");
     println!("{}", input);
     let tokens = tokenize(input);
     for token in tokens.clone().unwrap().iter() {
@@ -10,5 +10,5 @@ fn main() {
 
     let ast = ASTParser::create_ast(tokens.clone().unwrap());
 
-    println!("{:?}",ast.unwrap());
+    println!("{}", ast.unwrap());
 }

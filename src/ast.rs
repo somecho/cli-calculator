@@ -11,6 +11,33 @@ pub enum Expression {
     MultiArity(Token, Vec<Box<Expression>>),
 }
 
+impl std::fmt::Display for Expression {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Expression::Grouping(e) => format!("({})", e.to_string()),
+            Expression::Literal(n) => n.to_string(),
+            Expression::Unary(op, e) => format!("{}{}", op, e.to_string()),
+            Expression::Binary(op, l, r) => format!("{} {} {}", l.to_string(), op, r.to_string()),
+            Expression::SingleArity(op, a) => format!("{}({})", op, a.to_string()),
+            Expression::DoubleArity(op, a, b) => {
+                format!("{}({},{})", op, a.to_string(), b.to_string())
+            }
+            Expression::MultiArity(op, args) => {
+                let mut string = String::from(op.to_string());
+                string += "(";
+                string += &args[0].to_string();
+                for i in 1..args.len() {
+                    string += ",";
+                    string += &args[i].to_string();
+                }
+                string += ")";
+                string
+            }
+        };
+        write!(f, "{}", s)
+    }
+}
+
 // precedence
 // grouping / primary
 // - (unary)
@@ -25,8 +52,22 @@ pub struct ASTParser {
 
 impl ASTParser {
     pub fn create_ast(tokens: Vec<Token>) -> Result<Box<Expression>, String> {
-        let mut parser = ASTParser { current: 0, tokens };
+        let mut parser = ASTParser {
+            current: 0,
+            tokens: tokens.clone(),
+        };
         let expression = parser.expression();
+        if parser.current < parser.tokens.len() {
+            let disjoint = tokens
+                .get(parser.current..parser.tokens.len())
+                .unwrap()
+                .iter()
+                .fold(String::new(), |acc, t| acc + &t.to_string());
+            return Err(format!(
+                "Error: \"{}\" is disjointed from formula",
+                disjoint
+            ));
+        }
         expression
     }
 
