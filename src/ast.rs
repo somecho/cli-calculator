@@ -38,13 +38,6 @@ impl std::fmt::Display for Expression {
     }
 }
 
-// precedence
-// grouping / primary
-// - (unary)
-// * / (factor)
-// + - (term)
-// Functions
-
 pub struct ASTParser {
     current: usize,
     tokens: Vec<Token>,
@@ -73,6 +66,108 @@ impl ASTParser {
 
     fn expression(&mut self) -> Result<Box<Expression>, String> {
         self.term()
+    }
+
+    fn function(&mut self) -> Result<Box<Expression>, String> {
+        let operator = self.previous().clone();
+        if vec![Token::Cos, Token::Sin, Token::Tan, Token::Log, Token::Sqrt].contains(&operator) {
+            if self.check(Token::OpenParen) {
+                self.advance();
+            } else {
+                return Err(format!(
+                    "Missing opening parenthesis ')' after {}",
+                    operator
+                ));
+            }
+            let arg = self.expression();
+            if self.check(Token::CloseParen) {
+                self.advance();
+            } else {
+                return Err(format!(
+                    "Missing closing parenthesis ')' after {}",
+                    operator
+                ));
+            }
+
+            return Ok(Box::new(Expression::SingleArity(
+                operator,
+                arg.expect("Unable to create syntax tree"),
+            )));
+        }
+        if operator == Token::Pow {
+            if self.check(Token::OpenParen) {
+                self.advance();
+            } else {
+                return Err(format!(
+                    "Missing opening parenthesis ')' after {}",
+                    operator
+                ));
+            }
+            let arg1 = self.expression();
+
+            if self.check(Token::Comma) {
+                self.advance();
+            } else {
+                return Err(format!("{} requires atleast two operands", operator));
+            }
+
+            let arg2 = self.expression();
+
+            if self.check(Token::CloseParen) {
+                self.advance();
+            } else {
+                return Err(format!(
+                    "Missing closing parenthesis ')' after {}",
+                    operator
+                ));
+            }
+            return Ok(Box::new(Expression::DoubleArity(
+                operator,
+                arg1.expect("Unable to create syntax tree"),
+                arg2.expect("Unable to create syntax tree"),
+            )));
+        }
+        if vec![Token::Max, Token::Min].contains(&operator) {
+            if self.check(Token::OpenParen) {
+                self.advance();
+            } else {
+                return Err(format!(
+                    "Missing opening parenthesis '(' after {}",
+                    operator
+                ));
+            }
+            let mut args: Vec<Box<Expression>> = Vec::new();
+            while *self.peek() != Token::CloseParen {
+                args.push(self.expression().expect("Unable to create syntax tree"));
+
+                if *self.peek() == Token::CloseParen {
+                    break;
+                }
+
+                if *self.peek() != Token::Comma {
+                    return Err("Either missing comma or close parenthesis".to_string());
+                }
+
+                self.advance();
+
+                if *self.peek() == Token::CloseParen {
+                    return Err("Trailing commas are not allowed".to_string());
+                }
+            }
+            if self.check(Token::CloseParen) {
+                self.advance();
+            } else {
+                return Err(format!(
+                    "Missing closing parenthesis ')' after {}",
+                    operator
+                ));
+            }
+            if args.len() < 2 {
+                return Err(format!("{} requires 2 or more arguments", operator));
+            }
+            return Ok(Box::new(Expression::MultiArity(operator, args)));
+        }
+        Err(format!("{} is not a valid function", operator))
     }
 
     fn term(&mut self) -> Result<Box<Expression>, String> {
@@ -128,12 +223,26 @@ impl ASTParser {
             )));
         }
 
+        if self.r#match(&vec![
+            Token::Cos,
+            Token::Tan,
+            Token::Sin,
+            Token::Log,
+            Token::Sqrt,
+            Token::Max,
+            Token::Min,
+            Token::Pow,
+        ]) {
+            return self.function();
+        }
+
         if self.r#match(&vec![Token::Number(self.peek().get_number()?)]) {
             return Ok(Box::new(Expression::Literal(self.previous().get_number()?)));
         }
         Err("Unable to create syntax tree".to_string())
     }
 
+    /// checks if current token matches given token and consumes it if it does
     fn r#match(&mut self, types: &Vec<Token>) -> bool {
         for t in types.iter() {
             if self.check(*t) {

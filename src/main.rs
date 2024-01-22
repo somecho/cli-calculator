@@ -1,14 +1,28 @@
-use calculator_rs::{ast::ASTParser, scanner::tokenize};
+use std::io;
+
+use calculator_rs::{ast::ASTParser, evaluate, scanner::tokenize};
 
 fn main() {
-    let input = String::from("4 * (1 + 2) 2");
-    println!("{}", input);
-    let tokens = tokenize(input);
-    for token in tokens.clone().unwrap().iter() {
-        println!("{}", token);
+    let mut input = String::new();
+    println!("Simple Calculator");
+    println!("To calculate, type a formula:");
+    loop {
+        let _ = io::stdin().read_line(&mut input);
+
+        let tokens = tokenize(input.clone());
+        if let Err(e) = tokens {
+            println!("{e}");
+            continue;
+        }
+
+        let ast = ASTParser::create_ast(tokens.unwrap());
+        if let Err(e) = ast {
+            println!("{e}");
+            continue;
+        }
+
+        let result = evaluate::evaluate(ast.unwrap());
+        println!("{result}");
+        input = String::new();
     }
-
-    let ast = ASTParser::create_ast(tokens.clone().unwrap());
-
-    println!("{}", ast.unwrap());
 }
