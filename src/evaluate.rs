@@ -49,11 +49,11 @@ pub fn evaluate(expr: Box<Expression>) -> f32 {
             match op {
                 Token::Max => args
                     .into_iter()
-                    .min_by(|a, &b| b.partial_cmp(a).unwrap())
+                    .max_by(|&a, b| a.partial_cmp(b).unwrap())
                     .unwrap(),
                 Token::Min => args
                     .into_iter()
-                    .max_by(|&a, b| a.partial_cmp(b).unwrap())
+                    .min_by(|&a, b| a.partial_cmp(b).unwrap())
                     .unwrap(),
                 _ => unreachable!(),
             }
