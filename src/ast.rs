@@ -186,7 +186,7 @@ impl ASTParser {
 
     fn factor(&mut self) -> Result<Box<Expression>, String> {
         let mut expr = self.unary();
-        while self.r#match(&vec![Token::Slash, Token::Star]) {
+        while self.r#match(&vec![Token::Slash, Token::Star, Token::Percent]) {
             let operator = self.previous().clone();
             let right = self.unary();
             expr = Ok(Box::new(Expression::Binary(

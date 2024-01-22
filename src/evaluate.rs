@@ -19,6 +19,7 @@ pub fn evaluate(expr: Box<Expression>) -> f32 {
                 Token::Plus => a + b,
                 Token::Star => a * b,
                 Token::Slash => a / b,
+                Token::Percent => a % b,
                 _ => unreachable!(),
             }
         }
