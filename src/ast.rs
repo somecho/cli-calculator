@@ -88,6 +88,9 @@ impl ASTParser {
                     operator
                 ));
             }
+            if self.end() {
+                return Err("Cannot end with opening parenthesis".to_string());
+            }
             let arg = self.expression();
             if self.check(Token::CloseParen) {
                 self.advance();
@@ -108,10 +111,15 @@ impl ASTParser {
                 self.advance();
             } else {
                 return Err(format!(
-                    "Missing opening parenthesis ')' after {}",
+                    "Missing opening parenthesis '(' after {}",
                     operator
                 ));
             }
+
+            if self.end() {
+                return Err("Cannot end with opening parenthesis".to_string());
+            }
+
             let arg1 = self.expression();
 
             if self.check(Token::Comma) {
@@ -136,6 +144,7 @@ impl ASTParser {
                 arg2.expect("Unable to create syntax tree"),
             )));
         }
+
         if vec![Token::Max, Token::Min].contains(&operator) {
             if self.check(Token::OpenParen) {
                 self.advance();
@@ -146,6 +155,9 @@ impl ASTParser {
                 ));
             }
             let mut args: Vec<Box<Expression>> = Vec::new();
+            if self.end() {
+                return Err("Cannot end with opening parenthesis".to_string());
+            }
             while *self.peek() != Token::CloseParen {
                 args.push(self.expression().expect("Unable to create syntax tree"));
 
