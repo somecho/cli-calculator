@@ -22,7 +22,7 @@ fn main() {
             continue;
         }
         let result = evaluate::evaluate(ast.unwrap(), &mut vars);
-        println!("{result}");
+        println!("=> {result}\n");
         input = String::new();
     }
 }
